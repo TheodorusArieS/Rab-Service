@@ -18,3 +18,11 @@ func CreateRabData(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK,result)
 }
+
+func GetRabData(c *gin.Context){
+	result,err := service.RabService.GetRabData()
+	if err !=nil{
+		c.JSON(http.StatusInternalServerError,err)
+	}
+	c.JSON(http.StatusOK,result)
+}

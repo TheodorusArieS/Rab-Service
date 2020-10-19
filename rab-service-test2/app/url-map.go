@@ -9,7 +9,7 @@ func UrlMap(){
 
 	rab :=router.Group("/rab")
 	{
-		rab.GET("/",nil)
+		rab.GET("/",controller.GetRabData)
 		rab.POST("/",controller.CreateRabData)
 	}
 
