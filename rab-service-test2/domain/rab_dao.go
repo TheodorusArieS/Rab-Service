@@ -55,8 +55,11 @@ func (data *RabDataList) GetRabDataList() (*RestResponse, *errors.RestError) {
 	var results1 []RabDataList
 	for result.Next() {
 		var res RabDataList
+		if err := result.Scan(&res.ProductName, &res.UnitProduct, &res.Quantity, &res.UnitPrice); err != nil {
+			fmt.Println("Error ketika mau ambil data RAB List")
+			return nil, errors.SendError("Error ketika mau ambil data RAB List", http.StatusInternalServerError)
+		}
 		results1 = append(results1, res)
-		fmt.Println(results1)
 
 	}
 
