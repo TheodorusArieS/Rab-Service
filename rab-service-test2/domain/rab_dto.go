@@ -7,12 +7,12 @@ type RestResponse struct {
 }
 
 type RabList struct {
-	Rab_Id int64 `json:"rab_id"`
+	Id int64 `json:"id"`
 	RabName string `json:"rab_name"`
 	Comodity string `json:"comodity"`
 	Province string `json:"province"`
 	City string `json:"city"`
-	Quantity int64 `json:"quantity"`
+	DetailProduct []RabDataList `json:"detail_product,omitempty"`
 
 }
 
@@ -32,4 +32,11 @@ type CreateRab struct {
 	City string `json:"city"`
 	User string `json:"user"`
 	DetailProduct []RabDataList `json:"detail_product,omitempty`
+}
+
+type RabLogList struct{
+	RabId int64 `json:"rab_id"`
+	CreatedAt string `json:"created_at"`
+	CreatedBy string `json:"created_by"`
+	Notes string `json:"notes"`
 }

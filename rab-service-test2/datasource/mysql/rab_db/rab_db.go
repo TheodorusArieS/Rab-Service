@@ -6,6 +6,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"rab-service-test2/schema"
+	"github.com/joho/godotenv"
+	"os"
 )
 
 var (
@@ -18,28 +20,30 @@ func PrintMe(){
 }
 
 func init(){
-	username :="root"
-	password :="admin"
-	host :="127.0.0.1:3306"
-	dbSchema :="rab_service"
+	_ = godotenv.Load()
+
+
+	username :=os.Getenv("DB_USER")
+	password :=os.Getenv("DB_PASSWORD")
+	host :=os.Getenv("DB_HOST")
+	dbSchema :=os.Getenv("DB_SCHEMA")
 
 	dataSource:=fmt.Sprintf("%s:%s@tcp(%s)/%s",username,password,host,dbSchema)
-	Client, err := sql.Open("mysql",dataSource)
-	if err !=nil{
-		panic(err)
-	}
-	if err =Client.Ping();err !=nil{
-		panic(err)
-	}
-	fmt.Println("Database configured")
-
-
+	// Client, err := sql.Open("mysql",dataSource)
+	// if err !=nil{
+	// 	panic(err)
+	// }
+	// if err =Client.Ping();err !=nil{
+	// 	panic(err)
+	// }
+	// fmt.Println("Database configured")
 	db, err := gorm.Open("mysql",dataSource)
 	if err != nil{
 		fmt.Println("mySQL:",err)
 	}
 	fmt.Println("Dropping All Tables")
 	Database = db
+	Client = db.DB()
 	schema.AutoMigrate(db)
 	fmt.Println("Recreating All Table")
 }

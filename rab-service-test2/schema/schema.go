@@ -31,5 +31,7 @@ func AutoMigrate(database *gorm.DB){
 
 	database.AutoMigrate(
 		RabDataList{},
+		RabData{},
+		RabLog{},
 	)
 }
