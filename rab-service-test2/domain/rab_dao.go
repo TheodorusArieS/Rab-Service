@@ -2,9 +2,10 @@ package rab
 
 import (
 	"fmt"
+	"math"
 	"net/http"
-
 	"rab-service-test2/datasource/mysql/rab_db"
+
 	// "database/sql"
 	"rab-service-test2/query"
 	errors "rab-service-test2/utilities"
@@ -43,15 +44,15 @@ func (data *RabDataList) CreateRabDataList(r RabDataList) (*RestResponse, *error
 	}, nil
 }
 
-func (data *RabDataList) GetRabDataList(offsetInt int64) (*RestResponse, *errors.RestError) {
+func (data *RabDataList) GetRabDataList(offsetInt int64, search string) (*RestResponse, *errors.RestError) {
 
-	stmt,err :=rab_db.Client.Prepare(query.QueryGetRabDataList+query.Limit3)
-	if err != nil{
-		return nil,errors.BadRequestError("ERROR WHEN PREPARING QUERY IN GET RAB DATA LIST")
+	stmt, err := rab_db.Client.Prepare(query.QueryGetRabDataList + query.Limit3)
+	if err != nil {
+		return nil, errors.BadRequestError("ERROR WHEN PREPARING QUERY IN GET RAB DATA LIST")
 	}
 
-	
-	result, err := stmt.Query(offsetInt)
+	searchKey := fmt.Sprint("%" + search + "%")
+	result, err := stmt.Query(searchKey, offsetInt)
 	fmt.Println(offsetInt)
 	if err != nil {
 		return nil, errors.InternalServerError("ERROR IN GET RAB DATA LIST QUERY")
@@ -65,9 +66,35 @@ func (data *RabDataList) GetRabDataList(offsetInt int64) (*RestResponse, *errors
 		results1 = append(results1, res)
 
 	}
+	stmt,err = rab_db.Client.Prepare(query.QueryGetRabDataList)
+	if err !=nil{
+		return nil,errors.BadRequestError("Error in preparing query for total data")
+	}
+	rows,err := stmt.Query(searchKey)
+	if err != nil{
+		return nil,errors.BadRequestError("Error in fetching data from database")
+	}
+
+	var totalData float64
+	var totalPage float64
+	for rows.Next(){
+		totalData++
+	}
+	var pageSize int64 = 3
+	totalPage = math.Ceil(totalData/float64(pageSize))
+	var currentPage  int64 = offsetInt/pageSize
+	if currentPage == 0{
+		currentPage =1 
+	}
 
 	results := &RestResponse{
 		Status:  http.StatusOK,
+		Meta:&MetaDetail{
+			TotalPage:int64(totalPage),
+			CurrentPage:currentPage,
+			PageSize:pageSize,
+			Total:int64(totalData),
+		},
 		Data:    results1,
 		Message: "Sukses ambil data",
 	}
@@ -85,26 +112,26 @@ func (data *RabList) GetRabDetails(id int64) (*RestResponse, *errors.RestError) 
 	var totalPrice int64
 	for productDetails.Next() {
 		var res RabDataList
-		if err := productDetails.Scan(&res.Rab_Id,&res.ProductName, &res.UnitProduct, &res.Quantity, &res.UnitPrice, &res.TotalPrice); err != nil {
+		if err := productDetails.Scan(&res.Rab_Id, &res.ProductName, &res.UnitProduct, &res.Quantity, &res.UnitPrice, &res.TotalPrice); err != nil {
 			return nil, errors.BadRequestError("Error when looping product details")
 		}
 		results = append(results, res)
 		totalPrice += int64(res.TotalPrice)
 	}
 
-	stmt,err = rab_db.Client.Prepare(query.QueryGetRabListDetail)
-	if err !=nil{
-		return nil,errors.BadRequestError("Error when preparing query to get RAB List")
+	stmt, err = rab_db.Client.Prepare(query.QueryGetRabListDetail)
+	if err != nil {
+		return nil, errors.BadRequestError("Error when preparing query to get RAB List")
 	}
-	rabList,err :=stmt.Query(id)
-	if err !=nil{
-		return nil,errors.BadRequestError("Error when trying to get RAB List from database")
+	rabList, err := stmt.Query(id)
+	if err != nil {
+		return nil, errors.BadRequestError("Error when trying to get RAB List from database")
 	}
-	var rabListDetail RabList 
-	for rabList.Next(){
+	var rabListDetail RabList
+	for rabList.Next() {
 		var res RabList
-		if err :=rabList.Scan(&res.Id,&res.RabName,&res.Comodity,&res.Province,&res.City); err!=nil{
-			return nil,errors.BadRequestError("Error when trying to implemend RAB List Details")
+		if err := rabList.Scan(&res.Id, &res.RabName, &res.Comodity, &res.Province, &res.City); err != nil {
+			return nil, errors.BadRequestError("Error when trying to implemend RAB List Details")
 		}
 		rabListDetail = res
 	}
@@ -168,23 +195,58 @@ func (data *RabList) CreateRabList(rab RabList) (*RestResponse, *errors.RestErro
 	return sendData, nil
 }
 
-func (data *RabList) GetRabList() (*RestResponse, *errors.RestError) {
-	stmt, err := rab_db.Client.Query(query.QueryGetRabList)
+func (data *RabList) GetRabList(offsetInt int64, search string) (*RestResponse, *errors.RestError) {
+	stmt, err := rab_db.Client.Prepare(query.QueryGetRabList + query.Limit3)
 	if err != nil {
-		return nil, errors.BadRequestError("Error when trying to get data from database")
+		return nil, errors.BadRequestError("Error when trying to prepare query")
 	}
+	searchKey := fmt.Sprint("%" + search + "%")
+	rows, err := stmt.Query(searchKey, searchKey, searchKey, searchKey, offsetInt)
+	if err != nil {
+		return nil, errors.BadRequestError("ERROR when trying to get data from database")
+	}
+
 	var results []RabList
-	for stmt.Next() {
+	for rows.Next() {
 		var res RabList
-		if err := stmt.Scan(&res.Id, &res.RabName, &res.Comodity, &res.Province, &res.City); err != nil {
+		if err := rows.Scan(&res.Id, &res.RabName, &res.Comodity, &res.Province, &res.City); err != nil {
 			return nil, errors.BadRequestError("Error when trying to loop data")
 		}
 		results = append(results, res)
 	}
+
+	var pageSize int64 = 3
+	stmt, err = rab_db.Client.Prepare(query.QueryGetRabList)
+	if err != nil {
+		return nil, errors.BadRequestError("Error when preparing query")
+	}
+
+	totalData, err := stmt.Query(searchKey, searchKey, searchKey, searchKey)
+	if err != nil {
+		return nil, errors.BadRequestError("Error when getting data to database")
+	}
+
+	var totalPage float64
+	var totalData2 float64
+	for totalData.Next() {
+		totalData2++
+	}
+	totalPage = math.Ceil(float64(totalData2) / float64(pageSize))
+	currentPage := offsetInt / int64(pageSize)
+	if currentPage == 0 {
+		currentPage = 1
+	}
+
 	finishedData := &RestResponse{
-		Message: "Success Getting Data from Database",
-		Status:  200,
+		Status: 200,
+		Meta: &MetaDetail{
+			TotalPage:   int64(totalPage),
+			CurrentPage: currentPage,
+			PageSize:    pageSize,
+			Total:       int64(totalData2),
+		},
 		Data:    results,
+		Message: "Success Getting Data from Database",
 	}
 	return finishedData, nil
 }

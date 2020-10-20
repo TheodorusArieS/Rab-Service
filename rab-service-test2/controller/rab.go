@@ -28,11 +28,13 @@ func GetRabData(c *gin.Context) {
 
 	page,_ :=c.GetQuery("page")
 	if page == ""{
-		page = "0"
+		page = "1"
 	}
+
+	search,_ :=c.GetQuery("search")
 	pageInt,_ := strconv.ParseInt(page,10,64)
 
-	result, err := service.RabService.GetRabData(pageInt)
+	result, err := service.RabService.GetRabData(pageInt,search)
 	
 
 	if err != nil {
@@ -65,7 +67,14 @@ func CreateRabList(c *gin.Context) {
 }
 
 func GetRabList(c *gin.Context){
-	result,err :=service.RabService.GetRabList()
+	page,_ :=c.GetQuery("page")
+	if page ==""{
+		page = "1"
+	}
+
+	pageInt,_ := strconv.ParseInt(page,10,64)
+	search,_ :=c.GetQuery("search")
+	result,err :=service.RabService.GetRabList(pageInt,search)
 	if err !=nil{
 		c.JSON(http.StatusBadRequest,err)
 	} else {

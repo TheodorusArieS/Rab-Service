@@ -8,10 +8,10 @@ import (
 
 type RabServiceInterface interface {
 	CreateRabData(rab.RabDataList) (*rab.RestResponse, *errors.RestError)
-	GetRabData(pageInt int64) (*rab.RestResponse, *errors.RestError)
+	GetRabData(pageInt int64, search string) (*rab.RestResponse, *errors.RestError)
 	GetRabDetails(int64) (*rab.RestResponse,*errors.RestError)
 	CreateRabList(rab.RabList) (*rab.RestResponse,*errors.RestError)
-	GetRabList()(*rab.RestResponse,*errors.RestError)
+	GetRabList(pageInt int64,search string)(*rab.RestResponse,*errors.RestError)
 }
 
 type rabService struct {
@@ -28,11 +28,11 @@ func (r *rabService) CreateRabData(data rab.RabDataList) (*rab.RestResponse, *er
 	return result, err
 }
 
-func (r *rabService) GetRabData(pageInt int64) (*rab.RestResponse, *errors.RestError) {
+func (r *rabService) GetRabData(pageInt int64, search string) (*rab.RestResponse, *errors.RestError) {
 	dao := &rab.RabDataList{}
 	offsetInt :=(pageInt-1)*3
 
-	result1, err1 := dao.GetRabDataList(offsetInt)
+	result1, err1 := dao.GetRabDataList(offsetInt,search)
 	if err1 != nil {
 		return nil, err1
 	}
@@ -53,9 +53,10 @@ func (r *rabService) CreateRabList(data rab.RabList)(*rab.RestResponse,*errors.R
 	return result,err
 }
 
-func (r *rabService) GetRabList() (*rab.RestResponse,*errors.RestError){
+func (r *rabService) GetRabList(pageInt int64,search string) (*rab.RestResponse,*errors.RestError){
 	dao :=&rab.RabList{}
-	result,err :=dao.GetRabList()
+	offsetInt :=(pageInt-1)*3
+	result,err :=dao.GetRabList(offsetInt,search)
 	
 	return result,err
 }

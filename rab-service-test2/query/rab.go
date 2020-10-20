@@ -13,6 +13,7 @@ const (
 	`
 	QueryGetRabDataList = `
 	SELECT rab_id,product_name,unit_product,quantity,unit_price,total_price FROM rab_service.rab_data_list
+	WHERE product_name LIKE ?
 	`
 
 	QueryCreateRabList = `
@@ -29,6 +30,7 @@ const (
 	QueryGetRabList =`
 	SELECT id,rab_name,comodity,province,city
 	FROM rab_data
+	WHERE rab_name LIKE ? OR comodity LIKE ? OR province LIKE ? OR city LIKE ? 
 	`
 
 	QueryCreateRabLog =`

@@ -2,6 +2,7 @@ package rab
 
 type RestResponse struct {
 	Status int64 `json:"status"`
+	Meta *MetaDetail `json:"meta_detail,omitempty"`
 	Data interface{} `json:"data"`
 	Message string `json:"message"`
 }
@@ -40,4 +41,11 @@ type RabLogList struct{
 	CreatedAt string `json:"created_at"`
 	CreatedBy string `json:"created_by"`
 	Notes string `json:"notes"`
+}
+
+type MetaDetail struct{
+	TotalPage int64 `json:"total_page"`
+	CurrentPage int64 `json:"currenct_page"`
+	PageSize int64 `json:"page_size"`
+	Total int64 `json:"total"`
 }
