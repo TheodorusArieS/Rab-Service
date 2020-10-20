@@ -25,7 +25,16 @@ func CreateRabData(c *gin.Context) {
 }
 
 func GetRabData(c *gin.Context) {
-	result, err := service.RabService.GetRabData()
+
+	page,_ :=c.GetQuery("page")
+	if page == ""{
+		page = "0"
+	}
+	pageInt,_ := strconv.ParseInt(page,10,64)
+
+	result, err := service.RabService.GetRabData(pageInt)
+	
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 	} else {

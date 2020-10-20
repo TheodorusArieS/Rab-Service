@@ -12,7 +12,7 @@ const (
 	VALUES(?,?,?,?,?,quantity*unit_price)
 	`
 	QueryGetRabDataList = `
-	SELECT rab_id,product_name,unit_product,quantity,unit_price,total_price FROM rab_service.rab_data_list;
+	SELECT rab_id,product_name,unit_product,quantity,unit_price,total_price FROM rab_service.rab_data_list
 	`
 
 	QueryCreateRabList = `
@@ -34,5 +34,21 @@ const (
 	QueryCreateRabLog =`
 	INSERT INTO rab_log(rab_id,notes)
 	VALUES(?,?)
+	`
+
+	QueryGetRabProductDetails =`
+	SELECT rab_id,product_name,unit_product,quantity,unit_price,total_price
+	FROM rab_data_list
+	WHERE rab_id = ?
+	`
+
+	QueryGetRabListDetail =`
+	SELECT id,rab_name,comodity,province,city
+	FROM rab_data
+	WHERE id = ?
+	`
+
+	Limit3 =`
+	LIMIT 3 OFFSET ?
 	`
 )

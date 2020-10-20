@@ -13,6 +13,7 @@ type RabList struct {
 	Province string `json:"province"`
 	City string `json:"city"`
 	DetailProduct []RabDataList `json:"detail_product,omitempty"`
+	TotalPrice int64 `json:"total_price"`
 
 }
 

@@ -23,18 +23,18 @@ func (data *RabDataList) CreateRabDataList(r RabDataList) (*RestResponse, *error
 		return nil, errors.BadRequestError("BAD REQUEST IN CREATING RAB DATA LIST IN EXEC COMMAND")
 	}
 
-	id,_ :=result.LastInsertId()
+	id, _ := result.LastInsertId()
 
-	stmt,err = rab_db.Client.Prepare(query.QueryCreateRabLog)
+	stmt, err = rab_db.Client.Prepare(query.QueryCreateRabLog)
 	if err != nil {
-		return nil,errors.BadRequestError("Failed to create Log in Create RAB List")
+		return nil, errors.BadRequestError("Failed to create Log in Create RAB List")
 	}
 
-	notes := fmt.Sprintf("Pembuatan Create RAB Data List ID %d",id)
-	_,err=stmt.Exec(id,notes)
+	notes := fmt.Sprintf("Pembuatan Create RAB Data List ID %d", id)
+	_, err = stmt.Exec(id, notes)
 
-	if err !=nil{
-		return nil,errors.BadRequestError("Failed to input RAB List ID to log")
+	if err != nil {
+		return nil, errors.BadRequestError("Failed to input RAB List ID to log")
 	}
 	return &RestResponse{
 		Status:  http.StatusOK,
@@ -43,9 +43,16 @@ func (data *RabDataList) CreateRabDataList(r RabDataList) (*RestResponse, *error
 	}, nil
 }
 
-func (data *RabDataList) GetRabDataList() (*RestResponse, *errors.RestError) {
+func (data *RabDataList) GetRabDataList(offsetInt int64) (*RestResponse, *errors.RestError) {
 
-	result, err := rab_db.Client.Query(query.QueryGetRabDataList)
+	stmt,err :=rab_db.Client.Prepare(query.QueryGetRabDataList+query.Limit3)
+	if err != nil{
+		return nil,errors.BadRequestError("ERROR WHEN PREPARING QUERY IN GET RAB DATA LIST")
+	}
+
+	
+	result, err := stmt.Query(offsetInt)
+	fmt.Println(offsetInt)
 	if err != nil {
 		return nil, errors.InternalServerError("ERROR IN GET RAB DATA LIST QUERY")
 	}
@@ -58,7 +65,6 @@ func (data *RabDataList) GetRabDataList() (*RestResponse, *errors.RestError) {
 		results1 = append(results1, res)
 
 	}
-	fmt.Println(results1)
 
 	results := &RestResponse{
 		Status:  http.StatusOK,
@@ -69,7 +75,49 @@ func (data *RabDataList) GetRabDataList() (*RestResponse, *errors.RestError) {
 }
 
 func (data *RabList) GetRabDetails(id int64) (*RestResponse, *errors.RestError) {
-	return nil, nil
+	stmt, err := rab_db.Client.Prepare(query.QueryGetRabProductDetails)
+	if err != nil {
+		return nil, errors.BadRequestError("Error When preparing query for get Rab Details")
+	}
+	productDetails, err := stmt.Query(id)
+
+	var results []RabDataList
+	var totalPrice int64
+	for productDetails.Next() {
+		var res RabDataList
+		if err := productDetails.Scan(&res.Rab_Id,&res.ProductName, &res.UnitProduct, &res.Quantity, &res.UnitPrice, &res.TotalPrice); err != nil {
+			return nil, errors.BadRequestError("Error when looping product details")
+		}
+		results = append(results, res)
+		totalPrice += int64(res.TotalPrice)
+	}
+
+	stmt,err = rab_db.Client.Prepare(query.QueryGetRabListDetail)
+	if err !=nil{
+		return nil,errors.BadRequestError("Error when preparing query to get RAB List")
+	}
+	rabList,err :=stmt.Query(id)
+	if err !=nil{
+		return nil,errors.BadRequestError("Error when trying to get RAB List from database")
+	}
+	var rabListDetail RabList 
+	for rabList.Next(){
+		var res RabList
+		if err :=rabList.Scan(&res.Id,&res.RabName,&res.Comodity,&res.Province,&res.City); err!=nil{
+			return nil,errors.BadRequestError("Error when trying to implemend RAB List Details")
+		}
+		rabListDetail = res
+	}
+	rabListDetail.TotalPrice = totalPrice
+	rabListDetail.DetailProduct = results
+
+	finishedResult := &RestResponse{
+		Message: "Success Getting Rab Details",
+		Status:  200,
+		Data:    rabListDetail,
+	}
+
+	return finishedResult, nil
 }
 
 func (data *RabList) CreateRabList(rab RabList) (*RestResponse, *errors.RestError) {
@@ -84,13 +132,13 @@ func (data *RabList) CreateRabList(rab RabList) (*RestResponse, *errors.RestErro
 	}
 	id, _ := insert.LastInsertId()
 
-	stmt,err = rab_db.Client.Prepare(query.QueryCreateRabLog)
-	if err != nil{
-		return nil,errors.BadRequestError("Error when trying to create log for Create Rab List")
+	stmt, err = rab_db.Client.Prepare(query.QueryCreateRabLog)
+	if err != nil {
+		return nil, errors.BadRequestError("Error when trying to create log for Create Rab List")
 	}
 
-	notes := fmt.Sprintf("Pembuatan Create RAB List ID %d",id)
-	_,err = stmt.Exec(id,notes)
+	notes := fmt.Sprintf("Pembuatan Create RAB List ID %d", id)
+	_, err = stmt.Exec(id, notes)
 
 	stmt, err = rab_db.Client.Prepare(query.QueryGetRabListCreatedData)
 	if err != nil {
@@ -122,13 +170,13 @@ func (data *RabList) CreateRabList(rab RabList) (*RestResponse, *errors.RestErro
 
 func (data *RabList) GetRabList() (*RestResponse, *errors.RestError) {
 	stmt, err := rab_db.Client.Query(query.QueryGetRabList)
-	if err!=nil{
-		return nil,errors.BadRequestError("Error when trying to get data from database")
+	if err != nil {
+		return nil, errors.BadRequestError("Error when trying to get data from database")
 	}
 	var results []RabList
 	for stmt.Next() {
 		var res RabList
-		if err := stmt.Scan(&res.Id,&res.RabName, &res.Comodity, &res.Province, &res.City); err != nil {
+		if err := stmt.Scan(&res.Id, &res.RabName, &res.Comodity, &res.Province, &res.City); err != nil {
 			return nil, errors.BadRequestError("Error when trying to loop data")
 		}
 		results = append(results, res)
